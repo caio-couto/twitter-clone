@@ -5,7 +5,8 @@ exports.requireLogin = (req, res, next) =>
         return next();
     }
     else
-    {
+    { 
+        req.session.returnTo = req.originalUrl;
         res.redirect('/login');
     }
 };

@@ -1,5 +1,7 @@
 const mongoose = require('mongoose');
 mongoose.set('strictQuery', false);
+const dotenv = require('dotenv').config();
+
 
 class Database
 {
@@ -10,7 +12,7 @@ class Database
 
     connect()
     {
-        mongoose.connect('mongodb+srv://caio:Cavalcante12345.@cluster0.ojgnhhi.mongodb.net/twitterClone?retryWrites=true&w=majority',
+        mongoose.connect(process.env.DB_URL,
         {
             useNewUrlParser: true,
             useUnifiedTopology: true,

@@ -37,7 +37,35 @@ const userSchema = new mongoose.Schema(
     {
         type: String,
         default: '/images/profilePic.jpeg'
-    }
+    },
+    likes: 
+    [
+        {
+            type: mongoose.Types.ObjectId,
+            ref: 'Post'
+        }
+    ],
+    retweets: 
+    [
+        {
+            type: mongoose.Types.ObjectId,
+            ref: 'Post'
+        }
+    ],
+    following: 
+    [
+        {
+            type: mongoose.Types.ObjectId,
+            ref: 'User'
+        }
+    ],
+    followers: 
+    [
+        {
+            type: mongoose.Types.ObjectId,
+            ref: 'User'
+        }
+    ]
 },
 {
     timestamps: true

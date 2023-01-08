@@ -35,7 +35,8 @@ router.post('/', async (req, res, next) =>
             if(result === true)
             {
                 req.session.user = user;
-                return res.redirect('/');
+                res.redirect(req.session.returnTo || '/');
+                delete req.session.returnTo;
             }
             else
             {

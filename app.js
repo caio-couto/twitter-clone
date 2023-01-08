@@ -1,10 +1,7 @@
 const express = require('express');
 const app = express();
-const PORT = 5000;
+const dotenv = require('dotenv').config();
 const { requireLogin } = require('./middleware');
-const loginRoutes = require('./routes/loginRoutes');
-const registerRoutes = require('./routes/RegisterRoutes');
-const logoutRoutes = require('./routes/logout');
 const path = require('path');
 const session = require('express-session');
 
@@ -24,22 +21,36 @@ app.use(session(
     saveUninitialized: false
 }));
 
-app.use('/login', loginRoutes);
-app.use('/register', registerRoutes);
-app.use('/logout', logoutRoutes);
+const loginRoute = require('./routes/loginRoutes');
+const registerRoute = require('./routes/registerRoutes');
+const logoutRoute = require('./routes/logout');
+const postRoute = require('./routes//postRoutes');
+const profileRoute = require('./routes/profileRoutes');
+const usersRoute = require('./routes/profileRoutes');
+
+const postsApiRoute = require('./routes/api/posts');
+
+app.use('/login', loginRoute);
+app.use('/register', registerRoute);
+app.use('/logout', logoutRoute);
+app.use('/posts', requireLogin, postRoute);
+app.use('/profile', requireLogin, profileRoute);
+
+app.use('/api/posts', postsApiRoute);
 
 app.get('/', requireLogin, (req, res, next) =>
 {
     const payload =
     {
         pageTitle: 'home',
-        userLoggedIn: req.session.user
+        userLoggedIn: req.session.user,
+        userLoggedInJs: JSON.stringify(req.session.user)
     } 
     
     res.status(200).render('home', payload);
 });
 
-const server = app.listen(PORT, () =>
+const server = app.listen(process.env.PORT, () =>
 {
-    console.log(`Server listen on port ${PORT}`);
+    console.log(`Server listen on port ${process.env.PORT}`);
 });
