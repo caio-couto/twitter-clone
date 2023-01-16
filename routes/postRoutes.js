@@ -11,7 +11,7 @@ router.get('/:id', (req, res, next) =>
         postId: req.params.id
     }
 
-    res.status(200).render('postPage', payload);
+    return res.status(200).render('postPage', payload);
 });
 
 module.exports = router;

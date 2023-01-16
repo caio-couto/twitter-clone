@@ -8,6 +8,7 @@ router.get('/', (req, res, next) =>
         req.session.destroy(() =>
         {
             res.redirect('/login');
+            return;
         });
     }
 });

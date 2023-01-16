@@ -1,3 +1,7 @@
+var cropper = undefined;
+var timer = undefined;
+var selectedUsers = [];
+
 $('#postTextarea, #replyTextarea').keyup((event) =>
 {
     const textbox = $(event.target);
@@ -73,37 +77,259 @@ $('#replyModal').on('hidden.bs.modal', () =>
     $('#originalPostContainer').html('');
 });
 
-$('#deleteModal').on('show.bs.modal', (event) =>
+$('#confirmPinModal').on('show.bs.modal', (event) =>
 {
     const button = $(event.relatedTarget);
     const postId = getPostIdFromElement(button);
 
-    $('#deletePostButton').data('id', postId);
-    
-    $.get(`/api/posts/${postId}`, (results) =>
-    {
-        outputPosts(results.postData, $('#originalPostContainer'));
-    });
+    $('#pinPostButton').data('id', postId);
 });
 
-$('#deleteModal').click((event) =>
+$('#pinPostButton').click((event) =>
 {
     const postId = $(event.target).data('id');
 
     $.ajax(
     {
         url: `/api/posts/${postId}`,
-        type: 'DELETE',
+        type: 'PUT',
+        data: { pinned: true },
         success: (data, status, xhr) =>
         {
-            if(xhr.status != 2002)
+            if(xhr.status != 204)
             {
-               alert('cold not delete post');
-               return;
+                alert('cold not pin post');
+                 return;
             }
-            
+                
             location.reload();
         }
+    });
+});
+
+$('#unpinModal').on('show.bs.modal', (event) =>
+{
+    const button = $(event.relatedTarget);
+    const postId = getPostIdFromElement(button);
+
+    $('#unpinPostButton').data('id', postId);
+});
+
+$('#unpinPostButton').click((event) =>
+{
+    const postId = $(event.target).data('id');
+
+    $.ajax(
+    {
+        url: `/api/posts/${postId}`,
+        type: 'PUT',
+        data: { pinned: false },
+        success: (data, status, xhr) =>
+        {
+            if(xhr.status != 204)
+            {
+                alert('cold not pin post');
+                 return;
+            }
+                
+            location.reload();
+        }
+    });
+});
+    
+$('#deleteModal').on('show.bs.modal', (event) =>
+{
+    const button = $(event.relatedTarget);
+    const postId = getPostIdFromElement(button);
+    
+    $('#deletePostButton').data('id', postId);
+        
+    $.get(`/api/posts/${postId}`, (results) =>
+    {
+        outputPosts(results.postData, $('#originalPostContainer'));
+    });
+});
+    
+$('#deleteModal').click((event) =>
+{
+    const postId = $(event.target).data('id');
+
+    fetch(`/api/posts/${postId}`,
+    {
+        method: 'DELETE',
+        headers:
+        {
+            'Content-Type': 'Application/json'
+        }
+    })
+    .then(() =>
+    {
+        location.reload();
+    })
+});
+
+$('#filePhoto').change((event) =>
+{
+    const input = event.target;
+
+    if(input.files && input.files[0])
+    {
+        const reader = new FileReader();
+        reader.onload = (event) =>
+        {
+            const image = document.getElementById('imagePreview');
+            image.src = event.target.result;
+
+            if(cropper !== undefined)
+            {
+                cropper.destroy();
+            }
+
+            cropper = new Cropper(image, 
+            {
+                aspectRatio: 1 / 1,
+                background: false
+            });
+        }
+        reader.readAsDataURL(input.files[0]);
+    }
+});
+
+$('#coverPhoto').change((event) =>
+{
+    const input = event.target;
+
+    if(input.files && input.files[0])
+    {
+        const reader = new FileReader();
+        reader.onload = (event) =>
+        {
+            const image = document.getElementById('coverPreview');
+            image.src = event.target.result;
+
+            if(cropper !== undefined)
+            {
+                cropper.destroy();
+            }
+
+            cropper = new Cropper(image, 
+            {
+                aspectRatio: 16 / 9,
+                background: false
+            });
+        }
+        reader.readAsDataURL(input.files[0]);
+    }
+});
+
+$('#imageUploadButton').click(() =>
+{
+    const canvas = cropper.getCroppedCanvas();
+
+    if(canvas == null)
+    {
+        alert('Cold not upload image');
+        return;
+    }
+
+    canvas.toBlob((blob) =>
+    {
+        const formData = new FormData();
+        formData.append('croppedImage', blob);
+
+
+        $.ajax(
+        {
+            url: '/api/users/profilePicture',
+            type: 'POST', 
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: () =>
+            {
+                location.reload();
+            }
+        })
+    });
+});
+
+$('#coverPhotoButton').click(() =>
+{
+    const canvas = cropper.getCroppedCanvas();
+
+    if(canvas == null)
+    {
+        alert('Cold not upload image');
+        return;
+    }
+
+    canvas.toBlob((blob) =>
+    {
+        const formData = new FormData();
+        formData.append('croppedImage', blob);
+
+
+        $.ajax(
+        {
+            url: '/api/users/coverPhoto',
+            type: 'POST', 
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: () =>
+            {
+                location.reload();
+            }
+        })
+    });
+});
+
+$('#userSearchTextBox').keydown((event) =>
+{
+    clearTimeout(timer);
+    const textBox = $(event.target);
+    let value = textBox.val();
+
+    if(value == '' && (event.which == 8 || event.keyCode == 8))
+    {
+        selectedUsers.pop();
+        updateSelectedUserHtml();
+        $('.resultsContainer').html('');
+        
+        if(selectedUsers.length == 0)
+        {
+            $('#createChatButton').prop('disabled', true);
+        }
+
+        return;
+    }
+
+    timer = setTimeout(() => 
+    {
+        value = textBox.val().trim();
+
+        if(value == '')
+        {
+            $('.resultsContainer').html('');
+        }
+        else
+        {
+            searchUsers(value);
+        }
+    }, 500);
+});
+
+$('#createChatButton').click(() =>
+{
+    const data = JSON.stringify(selectedUsers);
+
+    $.post('/api/chats', { users: data }, (chat) =>
+    {
+        if(!chat || !chat._id)
+        {
+            return alert('invalid response from server.');
+        }
+        window.location.href = `/messages/${chat._id}`;
     });
 });
 
@@ -125,7 +351,7 @@ $(document).on('click', '.likeButton', (event) =>
         {
             button.find('span').text(postData.likes.length || '');
 
-            if(postData.likes.includes(userLoggendIn._id))
+            if(postData.likes.includes(userLoggedIn._id))
             {
                 button.addClass('active');
             }
@@ -155,7 +381,7 @@ $(document).on('click', '.retweetButton', (event) =>
         {
             button.find('span').text(postData.retweetUsers.length || '');
 
-            if(postData.retweetUsers.includes(userLoggendIn._id))
+            if(postData.retweetUsers.includes(userLoggedIn._id))
             {
                 button.addClass('active');
             }
@@ -187,20 +413,43 @@ $(document).on('click', '.followButton', (event) =>
         {
             url: `/api/users/${userId}/follow`,
             type: 'PUT',
-            success: (data) =>
+            success: (data, status, xhr) =>
             {
-                console.log(data);
+                if(xhr.status == 404)
+                {
+                    alert('user not founf');
+                    return;
+                }
+
+                let difference = 1;
+                if(data.following.includes(userId))
+                {
+                    button.addClass('following');
+                    button.text('following')
+                }
+                else
+                {
+                    button.removeClass('following');
+                    button.text('follow');
+                    difference = -1;
+                }
+                
+                const followersLabel = $('#followersValue');
+                if(followersLabel.length != 0)
+                {
+                    const followersText = parseInt(followersLabel.text());
+                    followersLabel.text(followersText + difference);
+                }
             }
         });
     
 });
 
-
 function getPostIdFromElement(element)
 {
     const isRoot = element.hasClass('post');
     const rootElement = isRoot ? element : element.closest('.post');
-    const postId = rootElement.data().user;
+    const postId = rootElement.data().id;
 
     if(postId === undefined)
     {
@@ -225,8 +474,8 @@ function createPostHtml(postData, largetFont = false)
     const postedBy = postData.postedBy;
     const displayName = `${postedBy.firstName} ${postedBy.lastName}`;
     const timestamps = timeDifference(new Date(), new Date(postData.createdAt));
-    const likeButtonActiveClass = postData.likes.includes(userLoggendIn._id) ? 'active' : '';
-    const retweetButtonActiveClass = postData.retweetUsers.includes(userLoggendIn._id) ? 'active' : '';
+    const likeButtonActiveClass = postData.likes.includes(userLoggedIn._id) ? 'active' : '';
+    const retweetButtonActiveClass = postData.retweetUsers.includes(userLoggedIn._id) ? 'active' : '';
     const largetFontClass = largetFont ? 'largerFont' : '';
     let retweetText = '';
     
@@ -256,10 +505,27 @@ function createPostHtml(postData, largetFont = false)
     }
     
     let button = '';
+    let pinnedPostText = '';
     
-    if(postData.postedBy._id == userLoggendIn._id)
+    if(postData.postedBy._id == userLoggedIn._id)
     {
-        button = `<button data-id='${postData._id}' data-bs-toggle="modal" data-bs-target="#deleteModal"><i class='fas fa-times'></i></button>`;
+        let pinnedClass = '';
+        let dataTarget = '#confirmPinModal';
+
+        if(postData.pinned && postData.pinned === true)
+        {
+            pinnedClass = 'active';
+            dataTarget = '#unpinModal';
+            pinnedPostText = '<i class="fas fa-thumbtack"></i> <span>Pinned post</span>';
+        }
+
+        button = 
+        `<button class='pinButton ${pinnedClass}' data-id='${postData._id}' data-bs-toggle="modal" data-bs-target="${dataTarget}">
+            <i class='fas fa-thumbtack'></i>
+        </button>
+        <button data-id='${postData._id}' data-bs-toggle="modal" data-bs-target="#deleteModal">
+            <i class='fas fa-times'></i>
+        </button>`;
     }
 
     return `<div class='post ${largetFontClass}' data-id='${postData._id}'>
@@ -271,6 +537,9 @@ function createPostHtml(postData, largetFont = false)
                         <img src='${postedBy.profilePic}'>
                     </div>
                     <div class='postContentContainer'>
+                        <div class='pinnedPostText'>
+                            ${pinnedPostText}
+                        </div>
                         <div class='header'>
                             <a href='/profile/${postedBy.username}' class='displayName'>${displayName}</a>
                             <span class='username'>@${postedBy.username}</span>
@@ -389,4 +658,138 @@ function outputPostswhithReplies(results, container)
         const html = createPostHtml(result);
         container.append(html);
     });
+}
+
+function outputUsers(results, container)
+{
+    container.html('');
+    results.forEach((result) =>
+    {
+        const html = createUserHtml(result, true);
+        container.append(html);
+    });
+
+    if(results.length == 0)
+    {
+        container.append('<span class="noResults">Results not found</span>');
+    }
+}
+
+function createUserHtml(userData, showFollowButton)
+{
+    const name = `${userData.firstName} ${userData.lastName}`;
+    const isFollowing = userLoggedIn.following && userLoggedIn.following.includes(userData._id);
+    const text = isFollowing ? 'following' : 'follow';
+    const buttonClass = isFollowing ? 'followButton following' : 'followButton';
+    let followButton = '';
+
+    if(showFollowButton && userLoggedIn._id != userData._id)
+    {
+        followButton = `<div class='followButtonContainer'>
+                            <button class='${buttonClass}' data-user='${userData._id}'>${text}</button>
+                        </div>`;
+    }
+
+    return `<div class='user'>
+                <div class='userImageContainer'>
+                    <img src='${userData.profilePic}'>
+                </div>
+                <div class='userDetailsContainer'>
+                    <div>
+                        <a href='/profile/${userData.username}'>${name}</a>
+                        <span class='username'>@${userData.username}</span>
+                    </div>
+                </div>
+                ${followButton}
+            </div>`;
+}
+
+function searchUsers(searchTerm)
+{
+    $.get('/api/users', { search: searchTerm }, (results) =>
+    {
+        outputSelectableUsers(results, $('.resultsContainer'));
+    });
+}
+
+function outputSelectableUsers(results, container)
+{
+    container.html('');
+    results.forEach((result) =>
+    {
+        if(result._id == userLoggedIn._id || selectedUsers.some(u => u._id == result._id))
+        {
+            return;
+        }
+
+        const html = createUserHtml(result, false);
+        const element = $(html);
+        element.click(() => userSelected(results));
+        container.append(element);
+    });
+
+    if(results.length == 0)
+    {
+        container.append('<span class="noResults">Results not found</span>');
+    }
+}
+
+function userSelected(user)
+{
+    selectedUsers.push(user[0]);
+    updateSelectedUserHtml();
+    $('#userSearchTextBox').val('').focus();
+    $('.resultsContainer').html('');
+    $('#createChatButton').prop('disabled', false);
+};
+
+function updateSelectedUserHtml()
+{
+    const elements = [];
+
+    selectedUsers.forEach((user) =>
+    {
+        const name = `${user.firstName} ${user.lastName}`; 
+        const userElement = $(`<span class="selectedUser">${name}</span>`);
+        elements.push(userElement);
+    });
+
+    $('.selectedUser').remove();
+    $('#selectedUsers').prepend(elements);
+}
+
+function getChatName(chatData)
+{
+    let chatName = chatData.chatName;
+
+    if(!chatName)
+    {
+        const otherCharUsers = getOtherChatUsers(chatData.users);
+        const namesArray = otherCharUsers.map(user => `${user.firstName} ${user.lastName}`);
+        chatName = namesArray.join(', ')
+    }
+
+    return chatName
+}
+
+function getOtherChatUsers(users)
+{
+    if(users.length == 1)
+    {
+        return users;
+    }
+
+    return users.filter((user) => user._id != userLoggedIn._id);
+}
+
+function messageRecived(newMessage)
+{
+    if($('.chatContainer').length == 0)
+    {
+        //show popup
+    }
+    else
+    {
+        addChatMessageHtml(newMessage);
+    }
 }

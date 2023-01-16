@@ -12,21 +12,35 @@ router.get('/', (req, res, next) =>
         profileUser: req.session.user
     };
 
-    res.status(200).render('profilePage', payload);
+    return res.status(200).render('profilePage', payload);
 });
 
 router.get('/:username', async (req, res, next) =>
 {
     const payload = await getPayload(req.params.username, req.session.user);
 
-    res.status(200).render('profilePage', payload);
+    return res.status(200).render('profilePage', payload);
+});
+
+router.get('/:username/following', async (req, res, next) =>
+{
+    const payload = await getPayload(req.params.username, req.session.user);
+    payload.selectedTab = 'following';
+    return res.status(200).render('followersAndFollowing', payload);
+});
+
+router.get('/:username/followers', async (req, res, next) =>
+{
+    const payload = await getPayload(req.params.username, req.session.user);
+    payload.selectedTab = 'followers';
+    return res.status(200).render('followersAndFollowing', payload);
 });
 
 router.get('/:username/replies', async (req, res, next) =>
 {
     const payload = await getPayload(req.params.username, req.session.user);
     payload.selectedTab = 'replies';
-    res.status(200).render('profilePage', payload);
+    return res.status(200).render('profilePage', payload);
 });
 
 async function getPayload(username, userLoggedIn)
@@ -35,11 +49,17 @@ async function getPayload(username, userLoggedIn)
     .catch((error) =>
     {
         console.log(error);
+        return;
     });
 
     if(user == null)
     {
-        user = await User.findById(username);
+        user = await User.findById(username)
+        .catch((error) =>
+        {
+            console.log(error);
+            return;
+        });
 
         if(user == null)
         {

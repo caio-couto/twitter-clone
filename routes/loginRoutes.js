@@ -25,7 +25,7 @@ router.post('/', async (req, res, next) =>
         {
             console.log(error);
             payload.errorMessage = 'something went wrong.';
-            res.status(200).render('login', payload);
+            return res.status(200).render('login', payload);
         })
 
         if(user != null)
@@ -37,23 +37,24 @@ router.post('/', async (req, res, next) =>
                 req.session.user = user;
                 res.redirect(req.session.returnTo || '/');
                 delete req.session.returnTo;
+                return;
             }
             else
             {
                 payload.errorMessage = 'Login credentials incorrect.';
-                res.status(200).render('login', payload);
+                return res.status(200).render('login', payload);
             }
         }
         else
         {
             payload.errorMessage = 'Login credentials incorrect.';
-            res.status(200).render('login', payload);
+            return res.status(200).render('login', payload);
         }
     }
     else
     {
         payload.errorMessage = 'Make sure each field has a valid value.';
-        res.status(200).render('login', payload);
+        return res.status(200).render('login', payload);
     }
 });
 

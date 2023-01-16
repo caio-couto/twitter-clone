@@ -38,6 +38,10 @@ const postScheema = new mongoose.Schema(
     {
         type: mongoose.Types.ObjectId,
         ref: 'Post'
+    },
+    pinned:
+    {
+        type: Boolean
     }
 }, 
 {

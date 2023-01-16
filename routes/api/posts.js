@@ -14,6 +14,36 @@ router.get('/', async (req, res, next) =>
         delete searchObj.isReply;
     }
 
+    if(searchObj.search !== undefined)
+    {
+        searchObj.content = { $regex: searchObj.search, $options: 'i'};
+        delete searchObj.search;
+    }
+
+    if(searchObj.followingOnly !== undefined)
+    {
+        const followingOnly = searchObj.followingOnly == 'true';
+
+        if(followingOnly)
+        {
+            const objectIds = [];
+
+            if(!req.session.user.following)
+            {
+                req.session.user.following = [];
+            }
+            req.session.user.following.forEach((user) => 
+            {
+                objectIds.push(user);
+            });
+            
+            objectIds.push(req.session.user._id);
+            searchObj.postedBy = {$in: objectIds};
+        }
+
+        delete searchObj.followingOnly;
+    }
+
     const results = await getPosts(searchObj);
     res.status(200).send(results)
 });
@@ -37,7 +67,7 @@ router.get('/:id', async (req, res, next) =>
     .catch((error) =>
     {
         console.log(error);
-        res.sendStatus(400);
+        return res.sendStatus(400);
     });
 
     res.status(200).send(results);
@@ -61,20 +91,20 @@ router.post('/', async (req, res, next) =>
     if(!content)
     {
         console.log('content param not sent with request');
-        return req.status(400);
+        return req.sendStatus(400);
     }
 
     if(!req.session.user)
     {
         console.log('user not logged in');
-        return req.status(400);
+        return req.sendStatus(400);
     }
 
     const newPost = await (await Post.create(postData)).populate('postedBy')
     .catch((error) =>
     {
         console.log(error);
-        res.sendStatus(400);
+        return res.sendStatus(400);
     });
 
     res.status(201).send(newPost);
@@ -91,14 +121,14 @@ router.put('/:id/like', async (req, res, next) =>
     .catch((error) =>
     {
         console.log(error);
-        res.sendStatus(400);
+        return res.sendStatus(400);
     });
 
     const post = await Post.findByIdAndUpdate(postId, {[option]: {likes: userId}}, {new: true})
     .catch((error) =>
     {
         console.log(error);
-        res.sendStatus(400);
+        return res.sendStatus(400);
     });
 
     req.session.user = user;
@@ -115,7 +145,7 @@ router.put('/:id/retweet', async (req, res, next) =>
     .catch((error) =>
     {
         console.log(error);
-        res.sendStatus(400);
+        return res.sendStatus(400);
     });
 
     const option = deletedPost != null ? "$pull" : "$addToSet";
@@ -128,7 +158,7 @@ router.put('/:id/retweet', async (req, res, next) =>
         .catch((error) =>
         {
             console.log(error);
-            res.sendStatus(400);
+            return res.sendStatus(400);
         });
     }
     
@@ -136,14 +166,14 @@ router.put('/:id/retweet', async (req, res, next) =>
     .catch((error) =>
     {
         console.log(error);
-        res.sendStatus(400);
+        return res.sendStatus(400);
     });
 
     const post = await Post.findByIdAndUpdate(postId, {[option]: {retweetUsers: userId}}, {new: true})
     .catch((error) =>
     {
         console.log(error);
-        res.sendStatus(400);
+        return res.sendStatus(400);
     });
 
     req.session.user = user;
@@ -151,18 +181,44 @@ router.put('/:id/retweet', async (req, res, next) =>
     res.status(200).send(post);
 });
 
-router.delete('/', async (req, res, next) =>
+router.delete('/:id', async (req, res, next) =>
 {
     const id = req.params.id;
 
-    const deletedPost = await Post.findByIdAndDelete(id)
+    console.log(id);
+
+    await Post.findByIdAndDelete(id)
     .catch((error) =>
     {
         console.log(error);
-        res.sendStatus(400);
+        return res.sendStatus(400);
     });
 
-    res.status(202);
+    return res.sendStatus(202);
+});
+
+router.put('/:id', async (req, res, next) =>
+{
+    if(req.body.pinned !== undefined)
+    {
+        await Post.updateMany({postedBy: req.session.user}, {pinned: false})
+        .catch((error) =>
+        {
+            console.log(error);
+            return res.sendStatus(400);
+        });
+    }
+
+    const id = req.params.id;
+
+    await Post.findByIdAndUpdate(id, req.body)
+    .catch((error) =>
+    {
+        console.log(error);
+        return res.sendStatus(400);
+    });
+
+    return res.sendStatus(204);
 });
 
 async function getPosts(filter)
