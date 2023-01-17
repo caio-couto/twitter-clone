@@ -749,7 +749,7 @@ function outputSelectableUsers(results, container)
 
         const html = createUserHtml(result, false);
         const element = $(html);
-        element.click(() => userSelected(results));
+        element.click(() => userSelected(result));
         container.append(element);
     });
 
@@ -761,7 +761,7 @@ function outputSelectableUsers(results, container)
 
 function userSelected(user)
 {
-    selectedUsers.push(user[0]);
+    selectedUsers.push(user);
     updateSelectedUserHtml();
     $('#userSearchTextBox').val('').focus();
     $('.resultsContainer').html('');
@@ -999,11 +999,11 @@ function createChatHtml(chatData, isPopup = false)
     let activeClass = undefined; 
     if(!Array.isArray(chatData.latestMessage))
     {
-        activeClass = !chatData.latestMessage || chatData.latestMessage.readBy.includes(userLoggedIn._id) ? '' : 'active';
+        activeClass = !chatData.latestMessage.length > 0 || chatData.latestMessage.readBy.includes(userLoggedIn._id) ? '' : 'active';
     }
     else
     {
-        activeClass = !chatData.latestMessage || chatData.latestMessage[0].readBy.includes(userLoggedIn._id) ? '' : 'active';
+        activeClass = !chatData.latestMessage.length > 0 || chatData.latestMessage[0].readBy.includes(userLoggedIn._id) ? '' : 'active';
     }
 
     return `<a href='/messages/${chatData._id}' class='resultListItem ${activeClass}'>

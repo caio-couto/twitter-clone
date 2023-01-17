@@ -238,6 +238,10 @@ button span
 {
     text-decoration: underline;
 }
+.header button:first-of-type
+{
+    margin-right: 10px;
+}
 .postButtonContainer button:hover
 {
     background-color: #d4edff;

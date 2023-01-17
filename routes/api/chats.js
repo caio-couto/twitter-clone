@@ -17,16 +17,17 @@ router.get('/', async (req, res, next) =>
         return res.sendStatus(400);
     });
     
+    if(req.query.unreadOnly !== undefined && req.query.unreadOnly == "true") 
+    {
+        chats = chats.filter((chat) => chat.latestMessage && !chat.latestMessage[0]?.readBy.includes(req.session.user._id));
+    }
+
     chats = await User.populate(chats, { path: 'latestMessage.sender' })
     .catch((error) => 
     {
         console.log(error);
     });
     
-    if(req.query.unreadOnly !== undefined && req.query.unreadOnly == "true") 
-    {
-        chats = chats.filter((chat) => chat.latestMessage && !chat.latestMessage[0].readBy.includes(req.session.user._id));
-    }
     return res.status(200).send(chats);
 });
 
@@ -80,13 +81,13 @@ router.post('/', async (req, res, next) =>
     }
 
     const users = JSON.parse(req.body.users);
-
+    
     if(users.length == 0)
     {
         console.log('users param not sent with request');
         return res.sendStatus(400);
     }
-
+    
     users.push(req.session.user);
 
     const chatData = 
