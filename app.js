@@ -7,7 +7,9 @@ const session = require('express-session');
 
 const database = require('./database/connection');
 
-const server = app.listen(process.env.PORT, () =>
+const PORT = process.env.PORT || 3977;
+
+const server = app.listen(PORT, () =>
 {
     console.log(`Server listen on port ${process.env.PORT}`);
 });
