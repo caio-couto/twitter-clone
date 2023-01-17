@@ -23,8 +23,10 @@ html(lang="pt-BR")
                         i.fa-solid.fa-search
                     a(href="/notifications")
                         i.fa-solid.fa-bell
+                        span#notificationsBadge
                     a(href="/messages")
                         i.fa-solid.fa-envelope
+                        span#messagesBadge
                     a(href="/profile")
                         i.fa-solid.fa-user
                     a(href="/logout")
@@ -36,6 +38,7 @@ html(lang="pt-BR")
                     block content
                 div.col-md-2.d-none.d-md-block.col-lg-4
                     span third column 
+        #notificationList
 
         script(src='https://kit.fontawesome.com/db2d03c709.js', crossorigin='anonymous')
         script(src='https://code.jquery.com/jquery-3.6.3.min.js', integrity='sha256-pvPw+upLPUjgMXY0G+8O0xUf+/Im1MZjXxxgOcBQBXU=', crossorigin='anonymous')

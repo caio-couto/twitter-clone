@@ -4,6 +4,7 @@ const Post = require('../../schemas/Post');
 const User = require('../../schemas/User');
 const Chat = require('../../schemas/Chat');
 const Message = require('../../schemas/Message');
+const Notification = require('../../schemas/Notification');
 
 router.post('/', async (req, res, next) =>
 {
@@ -27,7 +28,7 @@ router.post('/', async (req, res, next) =>
         return res.sendStatus(400)
     });
 
-    await Chat.findByIdAndUpdate(req.body.chatId, { latestMessage: message })
+    const chat = await Chat.findByIdAndUpdate(req.body.chatId, { latestMessage: message })
     .catch((error) =>
     {
         console.log(error);
@@ -49,7 +50,23 @@ router.post('/', async (req, res, next) =>
         console.log(error);
     });
 
+    insertNotifications(chat, message);
+
     res.status(201).send(message);
 });
+
+function insertNotifications(chat, message)
+{
+    chat.users.forEach((userId) =>
+    {
+        console.log(message.sender._id, userId);
+        if(userId.toString() == message.sender._id.toString())
+        {
+            return;
+        }
+
+        Notification.insertNotification(userId, message.sender._id, 'newMessage', message.chat._id);
+    });
+}
 
 module.exports = router;

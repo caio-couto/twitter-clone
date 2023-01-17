@@ -13,3 +13,22 @@ socket.on('message recived', (newMessage) =>
 {
     messageRecived(newMessage);
 });
+
+socket.on('notifications recived', () =>
+{
+    $.get('/api/notifications/latest', (notificationData) =>
+    {
+        showNotificationPopup(notificationData)
+        refreshNotificationsBadge();
+    })
+});
+
+function emitNotification(userId)
+{
+    if(userId == userLoggedIn._id)
+    {
+        return;
+    }
+
+    socket.emit('notifications recived', userId);
+}

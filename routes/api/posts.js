@@ -2,6 +2,7 @@ const express =  require('express');
 const router = express.Router();
 const Post = require('../../schemas/Post');
 const User = require('../../schemas/User');
+const Notification = require('../../schemas/Notification');
 
 router.get('/', async (req, res, next) =>
 {
@@ -100,12 +101,17 @@ router.post('/', async (req, res, next) =>
         return req.sendStatus(400);
     }
 
-    const newPost = await (await Post.create(postData)).populate('postedBy')
+    const newPost = await (await (await Post.create(postData)).populate('postedBy')).populate('replyTo')
     .catch((error) =>
     {
         console.log(error);
         return res.sendStatus(400);
     });
+
+    if(newPost.replyTo !== undefined)
+    {
+        await Notification.insertNotification(newPost.replyTo.postedBy, req.session.user, 'newPost', newPost._id);
+    }
 
     res.status(201).send(newPost);
 });
@@ -132,6 +138,11 @@ router.put('/:id/like', async (req, res, next) =>
     });
 
     req.session.user = user;
+
+    if(!isLiked)
+    {
+        await Notification.insertNotification(post.postedBy, userId, 'postLike', post._id);
+    }
 
     res.status(200).send(post);
 });
@@ -175,6 +186,11 @@ router.put('/:id/retweet', async (req, res, next) =>
         console.log(error);
         return res.sendStatus(400);
     });
+
+    if(!deletedPost)
+    {
+        await Notification.insertNotification(post.postedBy, userId, 'retweet', post._id);
+    }
 
     req.session.user = user;
 

@@ -16,15 +16,21 @@ router.get('/', async (req, res, next) =>
         console.log(error);
         return res.sendStatus(400);
     });
-
+    
     chats = await User.populate(chats, { path: 'latestMessage.sender' })
     .catch((error) => 
     {
         console.log(error);
     });
-
+    
+    if(req.query.unreadOnly !== undefined && req.query.unreadOnly == "true") 
+    {
+        chats = chats.filter((chat) => chat.latestMessage && !chat.latestMessage[0].readBy.includes(req.session.user._id));
+    }
     return res.status(200).send(chats);
 });
+
+
 
 router.get('/:chatId', async (req, res, next) =>
 {
@@ -51,6 +57,18 @@ router.get('/:chatId/messages', async (req, res, next) =>
     });
 
     return res.status(200).send(messages);
+});
+
+router.put('/:chatId/messages/markRead', async (req, res, next) =>
+{
+    const messages = await Message.updateMany({chat: req.params.chatId}, {$addToSet: { readBy: req.session.user._id }})
+    .catch((error) =>
+    {
+        console.log(error);
+        return res.sendStatus(400);
+    });
+
+    return res.sendStatus(200);
 });
 
 router.post('/', async (req, res, next) =>
