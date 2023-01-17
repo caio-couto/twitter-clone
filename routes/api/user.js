@@ -153,7 +153,7 @@ router.post('/coverPhoto', upload.single('croppedImage'), async (req, res, next)
         return res.sendStatus(400);
     }
 
-    if(req.session.user.coverPhoto !== '')
+    if(req.session.user.coverPhoto !== 'none')
     {
         const filePath = req.session.user.coverPhoto;
         const targetPath = path.join(__dirname, `../../${filePath}`);

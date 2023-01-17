@@ -59,7 +59,6 @@ function insertNotifications(chat, message)
 {
     chat.users.forEach((userId) =>
     {
-        console.log(message.sender._id, userId);
         if(userId.toString() == message.sender._id.toString())
         {
             return;

@@ -201,8 +201,6 @@ router.delete('/:id', async (req, res, next) =>
 {
     const id = req.params.id;
 
-    console.log(id);
-
     await Post.findByIdAndDelete(id)
     .catch((error) =>
     {

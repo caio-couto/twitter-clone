@@ -13,7 +13,7 @@ block content
         .profileHeaderContainer
             .coverPhotoSection
                 .coverPhotoContainer
-                    if(profileUser.coverPhoto)
+                    if(profileUser.coverPhoto && profileUser.coverPhoto !== 'none')
                         img(src=profileUser.coverPhoto, alt="Cover image")
                     if(profileUser._id == userLoggedIn._id)
                             button.coverPhotoButton(data-bs-toggle='modal' data-bs-target='#coverPhotoUploadModal')

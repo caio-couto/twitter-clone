@@ -1,9 +1,5 @@
 const express =  require('express');
 const router = express.Router();
-const Post = require('../../schemas/Post');
-const User = require('../../schemas/User');
-const Chat = require('../../schemas/Chat');
-const Message = require('../../schemas/Message');
 const Notification = require('../../schemas/Notification');
 
 router.get('/', async (req, res, next) =>
