@@ -3,7 +3,7 @@ const app = express();
 const dotenv = require('dotenv').config();
 const { requireLogin } = require('./middleware');
 const path = require('path');
-const session = require('express-session');
+const session = require('cookie-session');
 
 const database = require('./database/connection');
 
@@ -23,11 +23,18 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
 app.use(express.urlencoded({extended: true}));
 
+app.set('trust proxy', 1);
+
 app.use(session(
 {
-    secret: 'caio couto',
-    resave: true,
-    saveUninitialized: false
+  secret: 'secret',
+  saveUninitialized: true,
+  resave: false,
+  maxAge: 1000 * 60 * 15,
+  cookie:
+  {
+    secure: true
+  }
 }));
 
 const loginRoute = require('./routes/loginRoutes');
