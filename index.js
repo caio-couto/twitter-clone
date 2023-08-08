@@ -17,7 +17,7 @@ const server = app.listen(PORT, () =>
 const io = require('socket.io')(server, { pingTimeout: 60000 });
 
 app.set('view engine', 'pug');
-app.set('views', 'views');
+app.set('views', path.join(__dirname, 'views'));
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use(express.json());
