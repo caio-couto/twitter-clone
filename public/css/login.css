@@ -9,6 +9,7 @@ body {
 }
 
 .loginContainer {
+    position: relative;
     padding: 20px;
     width: 80%;
     max-width: 500px;
@@ -41,4 +42,10 @@ input[type="submit"] {
     border: none;
     border-radius: 2px;
     margin-bottom: 10px;
+}
+.loginContainer button
+{
+  position: absolute;
+  top: 10px;
+  right: 10px;
 }
