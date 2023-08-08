@@ -31,7 +31,7 @@ app.use(session(
 }));
 
 const loginRoute = require('./routes/loginRoutes');
-const registerRoute = require('./routes/registerRoutes');
+const registerRoute = require('./routes/RegisterRoutes');
 const logoutRoute = require('./routes/logout');
 const postRoute = require('./routes//postRoutes');
 const profileRoute = require('./routes/profileRoutes');
