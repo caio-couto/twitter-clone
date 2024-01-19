@@ -31,20 +31,25 @@ router.post('/', async (req, res, next) =>
 
         if(user == null)
         {
-            const newUser = await User.create(
+            let newUser;
+            try 
             {
-                firstName,
-                lastName,
-                username, 
-                email, 
-                password: await bcrypt.hash(password, 10)
-            })
-            .catch((error) => 
+                newUser = await User.create(
+                {
+                    firstName,
+                    lastName,
+                    username, 
+                    email, 
+                    password: await bcrypt.hash(password, 10)
+                })    
+            } 
+            catch (error) 
             {
                 payload.errorMessage = 'Something went wrong.';
+                console.log(error);
                 return res.status(200).render('register', payload);
-            });
-
+            }
+            
             req.session.user = newUser;
             return res.redirect('/');
         }
